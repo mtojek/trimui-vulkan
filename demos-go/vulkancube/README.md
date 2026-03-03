@@ -4,12 +4,43 @@
 
 ## Supported platforms
 
-* Windows (GLFW)
-* Android (Native)
-* Linux graphics (GLFW)
 * OS X / macOS (GLFW + MoltenVK)
-* iOS (Metal + MoltenVK)
+* TrimUI Smart Pro (Linux, TODO)
 
-## License 
+## macOS setup (GLFW or SDL2)
 
-WTFPL
+Homebrew packages:
+- `molten-vk`
+- `vulkan-headers`
+- `vulkan-loader`
+- `vulkan-tools`
+- `shaderc`
+- `glfw` (for GLFW variant)
+- `sdl2` (for SDL2 variant)
+
+Optional:
+- `HOMEBREW_NO_AUTO_UPDATE=1`
+
+## Build shaders (optional, if you modify shaders)
+
+From `/Users/$USER/code/trimui-vulkan/demos-go/vulkancube`:
+
+```sh
+make shaders
+```
+
+## Run on macOS
+
+GLFW:
+```sh
+cd /Users/$USER/code/trimui-vulkan/demos-go/vulkancube/vulkancube_glfw
+export DYLD_LIBRARY_PATH="/opt/homebrew/lib:$DYLD_LIBRARY_PATH"
+CGO_LDFLAGS="-L/opt/homebrew/lib" go run .
+```
+
+SDL2:
+```sh
+cd /Users/$USER/code/trimui-vulkan/demos-go/vulkancube/vulkancube_sdl2
+export DYLD_LIBRARY_PATH="/opt/homebrew/lib:$DYLD_LIBRARY_PATH"
+CGO_LDFLAGS="-L/opt/homebrew/lib" go run .
+```
