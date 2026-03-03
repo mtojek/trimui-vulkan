@@ -69,6 +69,7 @@ func (a *Application) VulkanInstanceExtensions() []string {
 	if a.debugEnabled {
 		extensions = append(extensions, "VK_EXT_debug_report")
 	}
+	extensions = append(extensions, "VK_KHR_portability_enumeration")
 	return extensions
 }
 
