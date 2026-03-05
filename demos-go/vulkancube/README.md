@@ -44,3 +44,12 @@ cd /Users/$USER/code/trimui-vulkan/demos-go/vulkancube/vulkancube_sdl2
 export DYLD_LIBRARY_PATH="/opt/homebrew/lib:$DYLD_LIBRARY_PATH"
 CGO_LDFLAGS="-L/opt/homebrew/lib" go run .
 ```
+
+## TrimUI (container)
+
+Currently we build only the SDL2 variant in the TrimUI container.
+
+Build inside the container (from the `vulkancube_sdl2` folder):
+```sh
+go build .
+```
