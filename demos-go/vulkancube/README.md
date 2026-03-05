@@ -53,3 +53,9 @@ Build inside the container (from the `vulkancube_sdl2` folder):
 ```sh
 go build .
 ```
+
+Runtime on TrimUI (uses system SDL2):
+```sh
+export LD_LIBRARY_PATH=/usr/trimui/lib:$LD_LIBRARY_PATH
+./vulkancube_sdl2
+```
