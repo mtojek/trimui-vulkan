@@ -1,15 +1,39 @@
 ## VulkanDraw
 
-![vulkan golang draw windows](http://dl.kc.vc/vulkan/screens/first-windows-vulkandraw.png)
-
-![vulkan golang draw osx apple macos](http://dl.kc.vc/vulkan/screens/first-moltenvk-vulkandraw.png)
+<img src="screens/triangle.png" alt="vulkan triangle golang" width="200" height="200">
 
 ## Supported platforms
 
-* Windows (GLFW)
-* Linux graphics (GLFW)
-* OS X / macOS (GLFW + MoltenVK)
+- Linux graphics (GLFW)
+- OS X / macOS (GLFW + MoltenVK)
 
-## License 
+## macOS setup (GLFW)
 
-WTFPL
+Homebrew packages:
+
+- `molten-vk`
+- `vulkan-headers`
+- `vulkan-loader`
+- `vulkan-tools`
+- `shaderc`
+- `glfw`
+
+Optional:
+
+- `HOMEBREW_NO_AUTO_UPDATE=1`
+
+## Build shaders (optional, if you modify shaders)
+
+From `/Users/$USER/code/trimui-vulkan/demos-go/vulkandraw`:
+
+```sh
+make shaders
+```
+
+## Run on macOS
+
+```sh
+cd /Users/$USER/code/trimui-vulkan/demos-go/vulkandraw/vulkandraw_glfw
+export DYLD_LIBRARY_PATH="/opt/homebrew/lib:$DYLD_LIBRARY_PATH"
+CGO_LDFLAGS="-L/opt/homebrew/lib" go run .
+```
