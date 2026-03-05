@@ -268,6 +268,11 @@ func NewVulkanDevice(appInfo *vk.ApplicationInfo, window uintptr, instanceExtens
 		instanceExtensions = append(instanceExtensions,
 			"VK_EXT_debug_report\x00")
 	}
+	if hasExtension(existingExtensions, "VK_KHR_portability_enumeration") &&
+		!hasExtension(instanceExtensions, "VK_KHR_portability_enumeration") {
+		instanceExtensions = append(instanceExtensions, "VK_KHR_portability_enumeration")
+	}
+	instanceExtensions = ensureNullTerminated(instanceExtensions)
 
 	// ANDROID:
 	// these layers must be included in APK,
@@ -290,6 +295,11 @@ func NewVulkanDevice(appInfo *vk.ApplicationInfo, window uintptr, instanceExtens
 		PpEnabledExtensionNames: instanceExtensions,
 		EnabledLayerCount:       uint32(len(instanceLayers)),
 		PpEnabledLayerNames:     instanceLayers,
+	}
+	if hasExtension(instanceExtensions, "VK_KHR_portability_enumeration") {
+		// VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR = 0x00000001
+		// Some vulkan-go versions don't expose the symbol, so use the literal.
+		instanceCreateInfo.Flags = vk.InstanceCreateFlags(0x00000001)
 	}
 	var v VulkanDeviceInfo
 	err := vk.Error(vk.CreateInstance(&instanceCreateInfo, nil, &v.Instance))
@@ -343,6 +353,10 @@ func NewVulkanDevice(appInfo *vk.ApplicationInfo, window uintptr, instanceExtens
 	deviceExtensions := []string{
 		"VK_KHR_swapchain\x00",
 	}
+	if hasExtension(existingExtensions, "VK_KHR_portability_subset") &&
+		!hasExtension(deviceExtensions, "VK_KHR_portability_subset") {
+		deviceExtensions = append(deviceExtensions, "VK_KHR_portability_subset\x00")
+	}
 	deviceCreateInfo := vk.DeviceCreateInfo{
 		SType:                   vk.StructureTypeDeviceCreateInfo,
 		QueueCreateInfoCount:    uint32(len(queueCreateInfos)),
@@ -385,6 +399,30 @@ func NewVulkanDevice(appInfo *vk.ApplicationInfo, window uintptr, instanceExtens
 		v.dbg = dbg
 	}
 	return v, nil
+}
+
+func hasExtension(exts []string, name string) bool {
+	for _, ext := range exts {
+		if ext == name || ext == name+"\x00" {
+			return true
+		}
+	}
+	return false
+}
+
+func ensureNullTerminated(exts []string) []string {
+	out := make([]string, 0, len(exts))
+	for _, ext := range exts {
+		if ext == "" {
+			continue
+		}
+		if ext[len(ext)-1] != '\x00' {
+			out = append(out, ext+"\x00")
+		} else {
+			out = append(out, ext)
+		}
+	}
+	return out
 }
 
 func getInstanceExtensions() (extNames []string) {

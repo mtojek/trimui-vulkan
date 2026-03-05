@@ -24,13 +24,12 @@ func init() {
 }
 
 func main() {
+	orPanic(glfw.Init())
 	procAddr := glfw.GetVulkanGetInstanceProcAddress()
 	if procAddr == nil {
 		panic("GetInstanceProcAddress is nil")
 	}
 	vk.SetGetInstanceProcAddr(procAddr)
-
-	orPanic(glfw.Init())
 	orPanic(vk.Init())
 	defer closer.Close()
 
