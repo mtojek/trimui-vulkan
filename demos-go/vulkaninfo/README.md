@@ -1,8 +1,10 @@
 # VulkanInfo
 
-## Example output (TrimUI Smart Pro)
+## TrimUI Smart Pro
 
-### Udev devices (SDL2 log)
+### Example output
+
+#### Udev devices (SDL2 log)
 
 ```text
 SDL_UDEV_DEVICEADDED 2 /dev/input/event1
@@ -22,7 +24,7 @@ SDL_UDEV_DEVICEADDED 8 /dev/sequencer2
 SDL_UDEV_DEVICEADDED 8 /dev/snd/timer
 ```
 
-### Vulkan device table
+#### Vulkan device table
 
 ```text
 ╭───────────────────────────────────────────────────────────────────────╮
@@ -140,7 +142,9 @@ SDL_UDEV_DEVICEADDED 8 /dev/snd/timer
 ╰────────────────────────┴──────────────────────────────────────────────╯
 ```
 
-## Example output (macOS)
+## macOS
+
+### Example output
 
 ```text
 ╭──────────────────────────────────────────────────────────────────────╮

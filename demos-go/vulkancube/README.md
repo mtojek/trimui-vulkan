@@ -4,10 +4,12 @@
 
 ## Supported platforms
 
-- OS X / macOS (GLFW + MoltenVK)
+- macOS (GLFW + MoltenVK)
 - TrimUI Smart Pro (Linux, SDL2 only)
 
-## macOS setup (GLFW or SDL2)
+## macOS
+
+### Setup
 
 Homebrew packages:
 - `molten-vk`
@@ -21,7 +23,7 @@ Homebrew packages:
 Optional:
 - `HOMEBREW_NO_AUTO_UPDATE=1`
 
-## Build shaders (optional, if you modify shaders)
+### Build shaders (optional)
 
 From `/Users/$USER/code/trimui-vulkan/demos-go/vulkancube`:
 
@@ -29,9 +31,7 @@ From `/Users/$USER/code/trimui-vulkan/demos-go/vulkancube`:
 make shaders
 ```
 
-## Run on macOS
-
-### GLFW
+### Run (GLFW)
 
 ```sh
 cd /Users/$USER/code/trimui-vulkan/demos-go/vulkancube/vulkancube_glfw
@@ -39,7 +39,7 @@ export DYLD_LIBRARY_PATH="/opt/homebrew/lib:$DYLD_LIBRARY_PATH"
 CGO_LDFLAGS="-L/opt/homebrew/lib" go run .
 ```
 
-### SDL2
+### Run (SDL2)
 
 ```sh
 cd /Users/$USER/code/trimui-vulkan/demos-go/vulkancube/vulkancube_sdl2
@@ -47,9 +47,11 @@ export DYLD_LIBRARY_PATH="/opt/homebrew/lib:$DYLD_LIBRARY_PATH"
 CGO_LDFLAGS="-L/opt/homebrew/lib" go run .
 ```
 
-## TrimUI (container)
+## TrimUI Smart Pro
 
-Currently we build only the SDL2 variant in the TrimUI container. GLFW requires X11/Wayland and is not supported on TrimUI.
+### Container
+
+Only the SDL2 variant is supported. GLFW requires X11/Wayland and is not available on TrimUI.
 
 Build inside the container (from the `vulkancube_sdl2` folder):
 
@@ -57,7 +59,9 @@ Build inside the container (from the `vulkancube_sdl2` folder):
 go build .
 ```
 
-Runtime on TrimUI (uses system SDL2):
+### Runtime
+
+Uses system SDL2:
 
 ```sh
 export LD_LIBRARY_PATH=/usr/trimui/lib:$LD_LIBRARY_PATH
