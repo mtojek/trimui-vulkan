@@ -59,7 +59,7 @@ func main() {
 	orPanic(err)
 	s, err = v.CreateSwapchain()
 	orPanic(err)
-	r, err = vulkandraw.CreateRenderer(v.Device, s.DisplayFormat)
+	r, err = vulkandraw.CreateRenderer(v.Device, s.DisplayFormat, v.QueueFamilyIndex)
 	orPanic(err)
 	err = s.CreateFramebuffers(r.RenderPass, nil)
 	orPanic(err)

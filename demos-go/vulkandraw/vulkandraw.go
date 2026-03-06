@@ -24,6 +24,8 @@ type VulkanDeviceInfo struct {
 	Surface  vk.Surface
 	Queue    vk.Queue
 	Device   vk.Device
+
+	QueueFamilyIndex uint32
 }
 
 type VulkanSwapchainInfo struct {
@@ -154,10 +156,12 @@ func VulkanDrawFrame(v VulkanDeviceInfo,
 	//			vk.WaitForFences
 
 	vk.ResetFences(v.Device, 1, r.fences)
+	waitStages := []vk.PipelineStageFlags{vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit)}
 	submitInfo := []vk.SubmitInfo{{
 		SType:              vk.StructureTypeSubmitInfo,
 		WaitSemaphoreCount: 1,
 		PWaitSemaphores:    r.semaphores,
+		PWaitDstStageMask:  waitStages,
 		CommandBufferCount: 1,
 		PCommandBuffers:    r.cmdBuffers[nextIdx:],
 	}}
@@ -210,7 +214,7 @@ func (r *VulkanRenderInfo) CreateCommandBuffers(n uint32) error {
 	return nil
 }
 
-func CreateRenderer(device vk.Device, displayFormat vk.Format) (VulkanRenderInfo, error) {
+func CreateRenderer(device vk.Device, displayFormat vk.Format, queueFamilyIndex uint32) (VulkanRenderInfo, error) {
 	attachmentDescriptions := []vk.AttachmentDescription{{
 		Format:         displayFormat,
 		Samples:        vk.SampleCount1Bit,
@@ -240,7 +244,7 @@ func CreateRenderer(device vk.Device, displayFormat vk.Format) (VulkanRenderInfo
 	cmdPoolCreateInfo := vk.CommandPoolCreateInfo{
 		SType:            vk.StructureTypeCommandPoolCreateInfo,
 		Flags:            vk.CommandPoolCreateFlags(vk.CommandPoolCreateResetCommandBufferBit),
-		QueueFamilyIndex: 0,
+		QueueFamilyIndex: queueFamilyIndex,
 	}
 	var r VulkanRenderInfo
 	err := vk.Error(vk.CreateRenderPass(device, &renderPassCreateInfo, nil, &r.RenderPass))
@@ -326,6 +330,15 @@ func NewVulkanDevice(appInfo *vk.ApplicationInfo, window uintptr, instanceExtens
 		return v, err
 	}
 
+	queueFamilyIndex, err := findQueueFamilyIndex(v.gpuDevices[0], v.Surface)
+	if err != nil {
+		v.gpuDevices = nil
+		vk.DestroySurface(v.Instance, v.Surface, nil)
+		vk.DestroyInstance(v.Instance, nil)
+		return v, err
+	}
+	v.QueueFamilyIndex = queueFamilyIndex
+
 	existingExtensions = getDeviceExtensions(v.gpuDevices[0])
 	log.Println("[INFO] Device extensions:", existingExtensions)
 
@@ -347,6 +360,7 @@ func NewVulkanDevice(appInfo *vk.ApplicationInfo, window uintptr, instanceExtens
 
 	queueCreateInfos := []vk.DeviceQueueCreateInfo{{
 		SType:            vk.StructureTypeDeviceQueueCreateInfo,
+		QueueFamilyIndex: v.QueueFamilyIndex,
 		QueueCount:       1,
 		PQueuePriorities: []float32{1.0},
 	}}
@@ -377,7 +391,7 @@ func NewVulkanDevice(appInfo *vk.ApplicationInfo, window uintptr, instanceExtens
 	} else {
 		v.Device = device
 		var queue vk.Queue
-		vk.GetDeviceQueue(device, 0, 0, &queue)
+		vk.GetDeviceQueue(device, v.QueueFamilyIndex, 0, &queue)
 		v.Queue = queue
 	}
 
@@ -531,7 +545,7 @@ func (v *VulkanDeviceInfo) CreateSwapchain() (VulkanSwapchainInfo, error) {
 	s.DisplaySize = surfaceCapabilities.CurrentExtent
 	s.DisplaySize.Deref()
 	s.DisplayFormat = formats[chosenFormat].Format
-	queueFamily := []uint32{0}
+	queueFamily := []uint32{v.QueueFamilyIndex}
 	swapchainCreateInfo := vk.SwapchainCreateInfo{
 		SType:           vk.StructureTypeSwapchainCreateInfo,
 		Surface:         v.Surface,
@@ -567,6 +581,31 @@ func (v *VulkanDeviceInfo) CreateSwapchain() (VulkanSwapchainInfo, error) {
 	}
 	s.Device = v.Device
 	return s, nil
+}
+
+func findQueueFamilyIndex(gpu vk.PhysicalDevice, surface vk.Surface) (uint32, error) {
+	var queueFamilyCount uint32
+	vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilyCount, nil)
+	if queueFamilyCount == 0 {
+		return 0, fmt.Errorf("no queue families found")
+	}
+	props := make([]vk.QueueFamilyProperties, queueFamilyCount)
+	vk.GetPhysicalDeviceQueueFamilyProperties(gpu, &queueFamilyCount, props)
+	for i := uint32(0); i < queueFamilyCount; i++ {
+		props[i].Deref()
+		if props[i].QueueFlags&vk.QueueFlags(vk.QueueGraphicsBit) == 0 {
+			continue
+		}
+		var presentSupport vk.Bool32
+		err := vk.Error(vk.GetPhysicalDeviceSurfaceSupport(gpu, i, surface, &presentSupport))
+		if err != nil {
+			continue
+		}
+		if presentSupport == vk.True {
+			return i, nil
+		}
+	}
+	return 0, fmt.Errorf("no graphics+present queue family found")
 }
 
 func (s *VulkanSwapchainInfo) CreateFramebuffers(renderPass vk.RenderPass, depthView vk.ImageView) error {
@@ -651,7 +690,7 @@ func (v VulkanDeviceInfo) CreateBuffers() (VulkanBufferInfo, error) {
 		1, -1, 0,
 		0, 1, 0,
 	})
-	queueFamilyIdx := []uint32{0}
+	queueFamilyIdx := []uint32{v.QueueFamilyIndex}
 	bufferCreateInfo := vk.BufferCreateInfo{
 		SType:                 vk.StructureTypeBufferCreateInfo,
 		Size:                  vk.DeviceSize(vertexData.Sizeof()),
