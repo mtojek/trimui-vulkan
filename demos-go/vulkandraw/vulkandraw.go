@@ -84,6 +84,10 @@ func (v *VulkanRenderInfo) DefaultSemaphore() vk.Semaphore {
 	return v.semaphores[0]
 }
 
+func (v *VulkanRenderInfo) RenderFinishedSemaphore() vk.Semaphore {
+	return v.semaphores[1]
+}
+
 func VulkanInit(v *VulkanDeviceInfo, s *VulkanSwapchainInfo,
 	r *VulkanRenderInfo, b *VulkanBufferInfo, gfx *VulkanGfxPipelineInfo) {
 
@@ -129,8 +133,10 @@ func VulkanInit(v *VulkanDeviceInfo, s *VulkanSwapchainInfo,
 	r.fences = make([]vk.Fence, 1)
 	ret := vk.CreateFence(v.Device, &fenceCreateInfo, nil, &r.fences[0])
 	check(ret, "vk.CreateFence")
-	r.semaphores = make([]vk.Semaphore, 1)
-	ret = vk.CreateSemaphore(v.Device, &semaphoreCreateInfo, nil, &r.semaphores[0])
+	r.semaphores = make([]vk.Semaphore, 2)
+	ret = vk.CreateSemaphore(v.Device, &semaphoreCreateInfo, nil, &r.semaphores[0]) // image available
+	check(ret, "vk.CreateSemaphore")
+	ret = vk.CreateSemaphore(v.Device, &semaphoreCreateInfo, nil, &r.semaphores[1]) // render finished
 	check(ret, "vk.CreateSemaphore")
 }
 
@@ -158,12 +164,14 @@ func VulkanDrawFrame(v VulkanDeviceInfo,
 	vk.ResetFences(v.Device, 1, r.fences)
 	waitStages := []vk.PipelineStageFlags{vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit)}
 	submitInfo := []vk.SubmitInfo{{
-		SType:              vk.StructureTypeSubmitInfo,
-		WaitSemaphoreCount: 1,
-		PWaitSemaphores:    r.semaphores,
-		PWaitDstStageMask:  waitStages,
-		CommandBufferCount: 1,
-		PCommandBuffers:    r.cmdBuffers[nextIdx:],
+		SType:                vk.StructureTypeSubmitInfo,
+		WaitSemaphoreCount:   1,
+		PWaitSemaphores:      r.semaphores,
+		PWaitDstStageMask:    waitStages,
+		SignalSemaphoreCount: 1,
+		PSignalSemaphores:    []vk.Semaphore{r.RenderFinishedSemaphore()},
+		CommandBufferCount:   1,
+		PCommandBuffers:      r.cmdBuffers[nextIdx:],
 	}}
 	err = vk.Error(vk.QueueSubmit(v.Queue, 1, submitInfo, r.DefaultFence()))
 	if err != nil {
@@ -184,10 +192,12 @@ func VulkanDrawFrame(v VulkanDeviceInfo,
 
 	imageIndices := []uint32{nextIdx}
 	presentInfo := vk.PresentInfo{
-		SType:          vk.StructureTypePresentInfo,
-		SwapchainCount: 1,
-		PSwapchains:    s.Swapchains,
-		PImageIndices:  imageIndices,
+		SType:              vk.StructureTypePresentInfo,
+		WaitSemaphoreCount: 1,
+		PWaitSemaphores:    []vk.Semaphore{r.RenderFinishedSemaphore()},
+		SwapchainCount:     1,
+		PSwapchains:        s.Swapchains,
+		PImageIndices:      imageIndices,
 	}
 	err = vk.Error(vk.QueuePresent(v.Queue, &presentInfo))
 	if err != nil {
@@ -223,7 +233,7 @@ func CreateRenderer(device vk.Device, displayFormat vk.Format, queueFamilyIndex 
 		StencilLoadOp:  vk.AttachmentLoadOpDontCare,
 		StencilStoreOp: vk.AttachmentStoreOpDontCare,
 		InitialLayout:  vk.ImageLayoutColorAttachmentOptimal,
-		FinalLayout:    vk.ImageLayoutColorAttachmentOptimal,
+		FinalLayout:    vk.ImageLayoutPresentSrc,
 	}}
 	colorAttachments := []vk.AttachmentReference{{
 		Attachment: 0,
@@ -234,12 +244,22 @@ func CreateRenderer(device vk.Device, displayFormat vk.Format, queueFamilyIndex 
 		ColorAttachmentCount: 1,
 		PColorAttachments:    colorAttachments,
 	}}
+	subpassDependencies := []vk.SubpassDependency{{
+		SrcSubpass:    vk.SubpassExternal,
+		DstSubpass:    0,
+		SrcStageMask:  vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
+		DstStageMask:  vk.PipelineStageFlags(vk.PipelineStageColorAttachmentOutputBit),
+		SrcAccessMask: 0,
+		DstAccessMask: vk.AccessFlags(vk.AccessColorAttachmentWriteBit),
+	}}
 	renderPassCreateInfo := vk.RenderPassCreateInfo{
 		SType:           vk.StructureTypeRenderPassCreateInfo,
 		AttachmentCount: 1,
 		PAttachments:    attachmentDescriptions,
 		SubpassCount:    1,
 		PSubpasses:      subpassDescriptions,
+		DependencyCount: 1,
+		PDependencies:   subpassDependencies,
 	}
 	cmdPoolCreateInfo := vk.CommandPoolCreateInfo{
 		SType:            vk.StructureTypeCommandPoolCreateInfo,
@@ -546,15 +566,22 @@ func (v *VulkanDeviceInfo) CreateSwapchain() (VulkanSwapchainInfo, error) {
 	s.DisplaySize.Deref()
 	s.DisplayFormat = formats[chosenFormat].Format
 	queueFamily := []uint32{v.QueueFamilyIndex}
+	// Some drivers misbehave with the minimum image count (1). Use min+1 when possible.
+	imageCount := surfaceCapabilities.MinImageCount + 1
+	if surfaceCapabilities.MaxImageCount > 0 && imageCount > surfaceCapabilities.MaxImageCount {
+		imageCount = surfaceCapabilities.MaxImageCount
+	}
 	swapchainCreateInfo := vk.SwapchainCreateInfo{
 		SType:           vk.StructureTypeSwapchainCreateInfo,
 		Surface:         v.Surface,
-		MinImageCount:   surfaceCapabilities.MinImageCount,
+		MinImageCount:   imageCount,
 		ImageFormat:     formats[chosenFormat].Format,
 		ImageColorSpace: formats[chosenFormat].ColorSpace,
 		ImageExtent:     surfaceCapabilities.CurrentExtent,
 		ImageUsage:      vk.ImageUsageFlags(vk.ImageUsageColorAttachmentBit),
-		PreTransform:    vk.SurfaceTransformIdentityBit,
+		PreTransform:    surfaceCapabilities.CurrentTransform,
+		// Use a supported composite alpha mode; picking an unsupported one can break presentation.
+		CompositeAlpha:  chooseCompositeAlpha(surfaceCapabilities.SupportedCompositeAlpha),
 
 		ImageArrayLayers:      1,
 		ImageSharingMode:      vk.SharingModeExclusive,
@@ -562,7 +589,7 @@ func (v *VulkanDeviceInfo) CreateSwapchain() (VulkanSwapchainInfo, error) {
 		PQueueFamilyIndices:   queueFamily,
 		PresentMode:           vk.PresentModeFifo,
 		OldSwapchain:          vk.NullSwapchain,
-		Clipped:               vk.False,
+		Clipped:               vk.True,
 	}
 	s.Swapchains = make([]vk.Swapchain, 1)
 	err = vk.Error(vk.CreateSwapchain(v.Device, &swapchainCreateInfo, nil, &(s.Swapchains[0])))
@@ -581,6 +608,21 @@ func (v *VulkanDeviceInfo) CreateSwapchain() (VulkanSwapchainInfo, error) {
 	}
 	s.Device = v.Device
 	return s, nil
+}
+
+func chooseCompositeAlpha(supported vk.CompositeAlphaFlags) vk.CompositeAlphaFlagBits {
+	preferred := []vk.CompositeAlphaFlagBits{
+		vk.CompositeAlphaOpaqueBit,
+		vk.CompositeAlphaPreMultipliedBit,
+		vk.CompositeAlphaPostMultipliedBit,
+		vk.CompositeAlphaInheritBit,
+	}
+	for _, v := range preferred {
+		if supported&vk.CompositeAlphaFlags(v) != 0 {
+			return v
+		}
+	}
+	return vk.CompositeAlphaOpaqueBit
 }
 
 func findQueueFamilyIndex(gpu vk.PhysicalDevice, surface vk.Surface) (uint32, error) {
