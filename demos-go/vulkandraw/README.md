@@ -6,6 +6,7 @@
 
 - Linux graphics (GLFW, desktop only)
 - OS X / macOS (GLFW + MoltenVK)
+- TrimUI Smart Pro (Linux, SDL2 only, TODO)
 
 ## macOS setup (GLFW)
 
@@ -36,4 +37,19 @@ make shaders
 cd /Users/$USER/code/trimui-vulkan/demos-go/vulkandraw/vulkandraw_glfw
 export DYLD_LIBRARY_PATH="/opt/homebrew/lib:$DYLD_LIBRARY_PATH"
 CGO_LDFLAGS="-L/opt/homebrew/lib" go run .
+```
+
+## TrimUI (container)
+
+Currently we build only the SDL2 variant in the TrimUI container. GLFW requires X11/Wayland and is not supported on TrimUI.
+
+Build inside the container (from the `vulkandraw_sdl2` folder):
+```sh
+go build .
+```
+
+Runtime on TrimUI (uses system SDL2):
+```sh
+export LD_LIBRARY_PATH=/usr/trimui/lib:$LD_LIBRARY_PATH
+./vulkandraw_sdl2
 ```
