@@ -1,4 +1,4 @@
-## VulkanDraw
+# VulkanDraw
 
 <img src="screens/triangle.png" alt="vulkan triangle golang" width="200" height="200">
 
@@ -11,7 +11,6 @@
 ## macOS setup (GLFW)
 
 Homebrew packages:
-
 - `molten-vk`
 - `vulkan-headers`
 - `vulkan-loader`
@@ -20,7 +19,6 @@ Homebrew packages:
 - `glfw`
 
 Optional:
-
 - `HOMEBREW_NO_AUTO_UPDATE=1`
 
 ## Build shaders (optional, if you modify shaders)

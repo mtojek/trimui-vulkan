@@ -1,10 +1,10 @@
-## VulkanInfo
+# VulkanInfo
 
-## Example output (TSP)
+## Example output (TrimUI Smart Pro)
 
-udev configuration
+### Udev devices (SDL2 log)
 
-```
+```text
 SDL_UDEV_DEVICEADDED 2 /dev/input/event1
 SDL_UDEV_DEVICEADDED 8 /dev/audio
 SDL_UDEV_DEVICEADDED 8 /dev/dsp
@@ -22,7 +22,9 @@ SDL_UDEV_DEVICEADDED 8 /dev/sequencer2
 SDL_UDEV_DEVICEADDED 8 /dev/snd/timer
 ```
 
-```
+### Vulkan device table
+
+```text
 ╭───────────────────────────────────────────────────────────────────────╮
 │               VULKAN PROPERTIES AND SURFACE CAPABILITES               │
 ├────────────────────────┬──────────────────────────────────────────────┤
@@ -140,7 +142,7 @@ SDL_UDEV_DEVICEADDED 8 /dev/snd/timer
 
 ## Example output (macOS)
 
-```
+```text
 ╭──────────────────────────────────────────────────────────────────────╮
 │              VULKAN PROPERTIES AND SURFACE CAPABILITES               │
 ├────────────────────────┬─────────────────────────────────────────────┤
