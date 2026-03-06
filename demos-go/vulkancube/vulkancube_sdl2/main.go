@@ -62,7 +62,7 @@ func (a *Application) VulkanDeviceExtensions() []string {
 
 func (a *Application) VulkanSwapchainDimensions() *as.SwapchainDimensions {
 	return &as.SwapchainDimensions{
-		Width: 500, Height: 500, Format: vk.FormatB8g8r8a8Unorm,
+		Width: 1280, Height: 720, Format: vk.FormatB8g8r8a8Unorm,
 	}
 }
 

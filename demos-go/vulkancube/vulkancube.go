@@ -781,6 +781,10 @@ func (s *SpinningCube) VulkanContextPrepare() error {
 	s.height = dim.Height
 	s.width = dim.Width
 
+	aspect := float32(s.width) / float32(s.height)
+	s.projectionMatrix.Perspective(lin.DegreesToRadians(45.0), aspect, 0.1, 100.0)
+	s.projectionMatrix[1][1] *= -1 // Flip projection matrix from GL to Vulkan orientation.
+
 	s.prepareDepth()
 	s.prepareTextures()
 	s.prepareCubeDataBuffers()
