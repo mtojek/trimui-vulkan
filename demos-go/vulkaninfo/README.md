@@ -167,7 +167,7 @@
 
 ## Supported platforms
 
-- Linux graphics (GLFW)
+- Linux graphics (GLFW, desktop only)
 - OS X / macOS (GLFW + MoltenVK)
 
 ## macOS setup (GLFW)

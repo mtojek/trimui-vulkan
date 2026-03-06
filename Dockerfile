@@ -4,6 +4,7 @@ USER root
 
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends ca-certificates curl tar
+RUN apt-get install -y --no-install-recommends libglfw3-dev pkg-config
 RUN rm -rf /var/lib/apt/lists/*
 RUN curl -sSL https://go.dev/VERSION?m=text | head -n1 > /tmp/GO_VERSION
 RUN uname -m > /tmp/ARCH

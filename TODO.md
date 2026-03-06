@@ -1,6 +1,5 @@
 # TODO
 
-- [ ] TSP: build GLFW if it works
 - [ ] TSP: build vulkandraw
 - [ ] TSP: build vulkaninfo
 - [ ] vulkancube: change resolution on console
