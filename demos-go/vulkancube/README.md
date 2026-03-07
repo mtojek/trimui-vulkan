@@ -67,3 +67,10 @@ Uses system SDL2:
 export LD_LIBRARY_PATH=/usr/trimui/lib:$LD_LIBRARY_PATH
 ./vulkancube_sdl2
 ```
+
+### Controls (SDL2)
+
+- `A` key / controller button A: slow down rotation
+- `B` key / controller button B: speed up rotation
+- controller button `5` (which=0): exit (same as `Esc`)
+- key presses are logged to stdout (scancode + keycode)

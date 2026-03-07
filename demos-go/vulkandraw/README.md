@@ -57,3 +57,7 @@ Uses system SDL2:
 export LD_LIBRARY_PATH=/usr/trimui/lib:$LD_LIBRARY_PATH
 ./vulkandraw_sdl2
 ```
+
+### Controls (SDL2)
+
+- controller button `5` (which=0): exit (same as `Esc`)
