@@ -34,7 +34,8 @@ Note: For TrimUI we currently build only the SDL2 variant (`vulkancube_sdl2`).
 ## TrimUI Smart Pro (SD layout)
 
 Prepared SD card layout is in:
+
 - `tg5040/Emus/tg5040/VUL.pak`
 - `tg5040/Roms/Vulkan Demos (VUL)`
 
-This layout assumes built binaries are placed in `/mnt/SDCARD/Dev` on the device.
+This layout assumes built binaries are placed in `/mnt/SDCARD/Roms/Vulkan Demos (VUL)/.demos-go` on the device.
