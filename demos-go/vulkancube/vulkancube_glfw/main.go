@@ -5,9 +5,9 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/go-gl/glfw/v3.3/glfw"
 	as "github.com/vulkan-go/asche"
 	"github.com/vulkan-go/demos/vulkancube"
-	"github.com/go-gl/glfw/v3.3/glfw"
 	vk "github.com/vulkan-go/vulkan"
 	"github.com/xlab/closer"
 )
@@ -129,7 +129,7 @@ func main() {
 				continue
 			}
 			glfw.PollEvents()
-			app.NextFrame()
+				app.NextFrame()
 
 			imageIdx, outdated, err := app.Context().AcquireNextImage()
 			orPanic(err)

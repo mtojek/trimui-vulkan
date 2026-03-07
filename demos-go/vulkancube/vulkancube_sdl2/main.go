@@ -83,8 +83,13 @@ func NewApplication(debugEnabled bool) *Application {
 }
 
 func main() {
-	orPanic(sdl.Init(sdl.INIT_VIDEO | sdl.INIT_EVENTS))
+	orPanic(sdl.Init(sdl.INIT_VIDEO | sdl.INIT_EVENTS | sdl.INIT_JOYSTICK | sdl.INIT_GAMECONTROLLER))
 	defer sdl.Quit()
+
+	sdl.SetHint(sdl.HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1")
+	sdl.JoystickEventState(sdl.ENABLE)
+	sdl.GameControllerEventState(sdl.ENABLE)
+	openInputDevices()
 
 	orPanic(sdl.VulkanLoadLibrary(""))
 	defer sdl.VulkanUnloadLibrary()
@@ -139,10 +144,29 @@ _MainLoop:
 			for event = sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 				switch t := event.(type) {
 				case *sdl.KeyboardEvent:
+					if t.State == sdl.PRESSED {
+						fmt.Printf("SDL key: scancode=%d keycode=%d\n",
+							int32(t.Keysym.Scancode), int32(t.Keysym.Sym))
+					}
 					if t.Keysym.Sym == sdl.K_ESCAPE {
 						exitC <- struct{}{}
 						continue _MainLoop
 					}
+				case *sdl.JoyButtonEvent:
+					if t.State == sdl.PRESSED {
+						fmt.Printf("SDL joy button: which=%d button=%d\n", t.Which, t.Button)
+					}
+				case *sdl.ControllerButtonEvent:
+					if t.State == sdl.PRESSED {
+						fmt.Printf("SDL controller button: which=%d button=%d\n", t.Which, t.Button)
+						if t.Which == 0 && t.Button == 5 {
+							exitC <- struct{}{}
+							continue _MainLoop
+						}
+					}
+				case *sdl.JoyDeviceAddedEvent:
+					fmt.Printf("SDL joy device added: which=%d\n", t.Which)
+					openInputDevices()
 				case *sdl.QuitEvent:
 					exitC <- struct{}{}
 					continue _MainLoop
@@ -175,6 +199,20 @@ func orPanic(err interface{}) {
 	case bool:
 		if !v {
 			panic("condition failed: != true")
+		}
+	}
+}
+
+func openInputDevices() {
+	for i := 0; i < sdl.NumJoysticks(); i++ {
+		if sdl.IsGameController(i) {
+			if c := sdl.GameControllerOpen(i); c != nil {
+				fmt.Printf("SDL controller opened: idx=%d name=%s\n", i, sdl.GameControllerNameForIndex(i))
+			}
+			continue
+		}
+		if j := sdl.JoystickOpen(i); j != nil {
+			fmt.Printf("SDL joystick opened: idx=%d name=%s\n", i, sdl.JoystickNameForIndex(i))
 		}
 	}
 }
