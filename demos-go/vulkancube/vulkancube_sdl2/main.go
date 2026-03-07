@@ -147,6 +147,14 @@ _MainLoop:
 					if t.State == sdl.PRESSED {
 						fmt.Printf("SDL key: scancode=%d keycode=%d\n",
 							int32(t.Keysym.Scancode), int32(t.Keysym.Sym))
+						switch t.Keysym.Sym {
+						case sdl.K_a:
+							app.AdjustSpin(-0.5)
+							fmt.Printf("spin angle: %.2f\n", app.SpinAngle())
+						case sdl.K_b:
+							app.AdjustSpin(0.5)
+							fmt.Printf("spin angle: %.2f\n", app.SpinAngle())
+						}
 					}
 					if t.Keysym.Sym == sdl.K_ESCAPE {
 						exitC <- struct{}{}
@@ -162,6 +170,14 @@ _MainLoop:
 						if t.Which == 0 && t.Button == 5 {
 							exitC <- struct{}{}
 							continue _MainLoop
+						}
+						switch t.Button {
+						case sdl.CONTROLLER_BUTTON_A:
+							app.AdjustSpin(-0.5)
+							fmt.Printf("spin angle: %.2f\n", app.SpinAngle())
+						case sdl.CONTROLLER_BUTTON_B:
+							app.AdjustSpin(0.5)
+							fmt.Printf("spin angle: %.2f\n", app.SpinAngle())
 						}
 					}
 				case *sdl.JoyDeviceAddedEvent:

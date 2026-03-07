@@ -62,6 +62,20 @@ type SpinningCube struct {
 	spinAngle float32
 }
 
+func (s *SpinningCube) AdjustSpin(delta float32) {
+	s.spinAngle += delta
+	if s.spinAngle < 0 {
+		s.spinAngle = 0
+	}
+	if s.spinAngle > 20 {
+		s.spinAngle = 20
+	}
+}
+
+func (s *SpinningCube) SpinAngle() float32 {
+	return s.spinAngle
+}
+
 func (s *SpinningCube) prepareDepth() {
 	dev := s.Context().Device()
 	depthFormat := vk.FormatD16Unorm
