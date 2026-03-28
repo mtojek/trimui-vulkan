@@ -23,6 +23,10 @@ RUN set -e; \
 
 ENV PATH="/usr/local/go/bin:${PATH}"
 
+RUN curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable
+
+ENV PATH="/root/.cargo/bin:${PATH}"
+
 RUN mkdir -p /workspace
 WORKDIR /workspace
 
