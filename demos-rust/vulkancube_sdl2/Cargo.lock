@@ -779,11 +779,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "ash",
- "foldhash",
+ "bytemuck",
  "glam",
  "image",
  "sdl2",
- "smallvec",
  "vulkano",
 ]
 
