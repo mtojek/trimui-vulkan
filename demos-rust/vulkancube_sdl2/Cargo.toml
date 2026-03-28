@@ -4,10 +4,14 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ash = "0.37"
 anyhow = "1.0"
-image = "0.24"
+ash = "0.38"
+foldhash = "0.1"
 glam = "0.27"
+image = "0.24"
+smallvec = "1.13"
+vulkano = "0.35"
 
 [dependencies.sdl2]
 version = "0.36"
+features = ["raw-window-handle"]
