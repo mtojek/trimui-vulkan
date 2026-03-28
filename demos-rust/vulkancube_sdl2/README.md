@@ -1,7 +1,5 @@
 # VulkanCube (SDL2, Rust)
 
-<img src="screens/cube.png" alt="vulkan cube rust" width="200" height="200">
-
 ## Supported platforms
 
 - macOS (SDL2 + MoltenVK)
@@ -12,6 +10,7 @@
 ### Setup
 
 Homebrew packages:
+
 - `molten-vk`
 - `vulkan-headers`
 - `vulkan-loader`
@@ -20,6 +19,7 @@ Homebrew packages:
 - `sdl2`
 
 Optional:
+
 - `HOMEBREW_NO_AUTO_UPDATE=1`
 
 ### Build
