@@ -27,7 +27,7 @@ Optional:
 From `/Users/$USER/code/trimui-vulkan/demos-rust/vulkancube_sdl2`:
 
 ```sh
-cargo build
+make build
 ```
 
 ### Run
@@ -46,7 +46,7 @@ cargo run
 Build inside the container (from the `vulkancube_sdl2` folder):
 
 ```sh
-cargo build --release
+make build-trimui
 ```
 
 ### Runtime
@@ -55,7 +55,7 @@ Uses system SDL2:
 
 ```sh
 export LD_LIBRARY_PATH=/usr/trimui/lib:$LD_LIBRARY_PATH
-./target/release/vulkancube_sdl2
+./target/aarch64-unknown-linux-gnu/release/vulkancube_sdl2
 ```
 
 ### Controls (SDL2)

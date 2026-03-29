@@ -1,12 +1,13 @@
 # trimui-vulkan
 
-Vulkan Go demos adapted for macOS and TrimUI Smart Pro workflows.
+Vulkan demos adapted for macOS and TrimUI Smart Pro workflows (Go and Rust).
 
 ## What’s here
 
 - `demos-go/vulkancube` – textured spinning cube (GLFW and SDL2 variants)
 - `demos-go/vulkandraw` – simple triangle (GLFW)
 - `demos-go/vulkaninfo` – device/info dump (GLFW)
+- `demos-rust/vulkancube_sdl2` – textured spinning cube (SDL2, Vulkano)
 
 Each demo has its own README with platform-specific steps.
 
@@ -17,6 +18,7 @@ See per-demo README files:
 - [vulkancube README](demos-go/vulkancube/README.md)
 - [vulkandraw README](demos-go/vulkandraw/README.md)
 - [vulkaninfo README](demos-go/vulkaninfo/README.md)
+- [vulkancube_sdl2 (Rust) README](demos-rust/vulkancube_sdl2/README.md)
 
 ## TrimUI Smart Pro (container)
 
