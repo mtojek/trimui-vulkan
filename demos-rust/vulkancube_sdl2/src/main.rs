@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -14,6 +15,9 @@ use vulkano::command_buffer::{
     SubpassBeginInfo, SubpassContents, SubpassEndInfo,
 };
 use vulkano::descriptor_set::allocator::StandardDescriptorSetAllocator;
+use vulkano::descriptor_set::layout::{
+    DescriptorSetLayout, DescriptorSetLayoutBinding, DescriptorSetLayoutCreateInfo, DescriptorType,
+};
 use vulkano::descriptor_set::{DescriptorSet, WriteDescriptorSet};
 use vulkano::device::physical::PhysicalDeviceType;
 use vulkano::device::{Device, DeviceCreateInfo, DeviceExtensions, QueueCreateInfo, QueueFlags};
@@ -30,14 +34,14 @@ use vulkano::pipeline::graphics::multisample::MultisampleState;
 use vulkano::pipeline::graphics::rasterization::{CullMode, FrontFace, RasterizationState};
 use vulkano::pipeline::graphics::viewport::{Scissor, Viewport, ViewportState};
 use vulkano::pipeline::graphics::GraphicsPipelineCreateInfo;
-use vulkano::pipeline::layout::PipelineDescriptorSetLayoutCreateInfo;
+use vulkano::pipeline::layout::PipelineLayoutCreateInfo;
 use vulkano::pipeline::{
-    DynamicState, GraphicsPipeline, Pipeline, PipelineBindPoint, PipelineLayout,
+    DynamicState, GraphicsPipeline, PipelineBindPoint, PipelineLayout,
     PipelineShaderStageCreateInfo,
 };
 use vulkano::render_pass::{Framebuffer, FramebufferCreateInfo, Subpass};
 use vulkano::shader::spirv::bytes_to_words;
-use vulkano::shader::{ShaderModule, ShaderModuleCreateInfo};
+use vulkano::shader::{ShaderModule, ShaderModuleCreateInfo, ShaderStages};
 use vulkano::swapchain::{
     self, PresentMode, Surface, SurfaceApi, Swapchain, SwapchainCreateInfo, SwapchainPresentInfo,
 };
@@ -132,6 +136,12 @@ fn main() -> Result<()> {
             "VK_EXT_metal_surface" => instance_extensions.ext_metal_surface = true,
             _ => {}
         }
+    }
+
+    // Some SDL2 Vulkan backends (e.g., PVR/Display) require VK_KHR_display
+    // even if it isn't reported in SDL's extension list.
+    if library.supported_extensions().khr_display {
+        instance_extensions.khr_display = true;
     }
 
     // MoltenVK / portability enumeration support.
@@ -314,12 +324,41 @@ fn main() -> Result<()> {
         PipelineShaderStageCreateInfo::new(fs_entry),
     ];
 
-    let layout = PipelineLayout::new(
+    let mut set_bindings = BTreeMap::new();
+    set_bindings.insert(
+        0,
+        DescriptorSetLayoutBinding {
+            stages: ShaderStages::VERTEX,
+            ..DescriptorSetLayoutBinding::descriptor_type(DescriptorType::UniformBuffer)
+        },
+    );
+    set_bindings.insert(
+        1,
+        DescriptorSetLayoutBinding {
+            stages: ShaderStages::FRAGMENT,
+            ..DescriptorSetLayoutBinding::descriptor_type(DescriptorType::CombinedImageSampler)
+        },
+    );
+
+    let ds_layout = DescriptorSetLayout::new(
         device.clone(),
-        PipelineDescriptorSetLayoutCreateInfo::from_stages(&stages)
-            .into_pipeline_layout_create_info(device.clone())
-            .context("pipeline layout create info")?,
+        DescriptorSetLayoutCreateInfo {
+            bindings: set_bindings,
+            ..Default::default()
+        },
     )
+    .context("descriptor set layout")?;
+
+    // Work around overly-strict update-after-bind limit validation on PVR.
+    let layout = unsafe {
+        PipelineLayout::new_unchecked(
+            device.clone(),
+            PipelineLayoutCreateInfo {
+                set_layouts: vec![ds_layout.clone()],
+                ..Default::default()
+            },
+        )
+    }
     .context("pipeline layout")?;
 
     let subpass = Subpass::from(render_pass.clone(), 0)
@@ -464,13 +503,6 @@ fn main() -> Result<()> {
         .collect();
 
     // --- Descriptor sets (one per swapchain image) ---
-    let ds_layout = pipeline
-        .layout()
-        .set_layouts()
-        .first()
-        .ok_or_else(|| anyhow!("no descriptor set layout"))?
-        .clone();
-
     let descriptor_sets: Vec<Arc<DescriptorSet>> = uniform_buffers
         .iter()
         .map(|ubo| {
