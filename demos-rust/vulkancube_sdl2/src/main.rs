@@ -582,8 +582,8 @@ fn main() -> Result<()> {
     let center = Vec3::ZERO;
     let up = Vec3::Y;
     let mut model = Mat4::IDENTITY;
-    let mut last_frame = Instant::now();
     let frame_time = Duration::from_micros(1_000_000 / 60);
+    let mut next_frame = Instant::now();
 
     // Wait for texture upload to finish before entering the render loop.
     texture_future.wait(None).context("wait texture upload")?;
@@ -646,9 +646,11 @@ fn main() -> Result<()> {
         }
 
         // --- Rate limiting ---
-        if last_frame.elapsed() < frame_time {
-            continue;
+        let now = Instant::now();
+        if now < next_frame {
+            std::thread::sleep(next_frame - now);
         }
+        next_frame += frame_time;
 
         // --- Update matrices ---
         let aspect = swapchain_extent[0] as f32 / swapchain_extent[1] as f32;
@@ -769,7 +771,7 @@ fn main() -> Result<()> {
             }
         }
 
-        last_frame = Instant::now();
+        // next_frame already advanced
     }
 
     // Wait for GPU to finish before dropping.
