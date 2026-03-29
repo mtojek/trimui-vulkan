@@ -51,6 +51,37 @@ use vulkano::{sync, Handle, Validated, VulkanError, VulkanLibrary, VulkanObject}
 const WIDTH: u32 = 1280;
 const HEIGHT: u32 = 720;
 
+fn open_input_devices(
+    gc: &sdl2::GameControllerSubsystem,
+    js: &sdl2::JoystickSubsystem,
+    controllers: &mut Vec<sdl2::controller::GameController>,
+    joysticks: &mut Vec<sdl2::joystick::Joystick>,
+) {
+    controllers.clear();
+    joysticks.clear();
+
+    let num = js.num_joysticks().unwrap_or(0);
+    for i in 0..num {
+        if gc.is_game_controller(i) {
+            if let Ok(c) = gc.open(i) {
+                let name = gc
+                    .name_for_index(i)
+                    .unwrap_or_else(|_| "Unknown".to_string());
+                println!("SDL controller opened: idx={} name={}", i, name);
+                controllers.push(c);
+            }
+            continue;
+        }
+        if let Ok(j) = js.open(i) {
+            let name = js
+                .name_for_index(i)
+                .unwrap_or_else(|_| "Unknown".to_string());
+            println!("SDL joystick opened: idx={} name={}", i, name);
+            joysticks.push(j);
+        }
+    }
+}
+
 #[rustfmt::skip]
 const VERTEX_DATA: [f32; 36 * 3] = [
     -1.0, -1.0, -1.0, -1.0, -1.0,  1.0, -1.0,  1.0,  1.0, -1.0,  1.0,  1.0,
@@ -110,6 +141,8 @@ fn load_shader(device: Arc<Device>, spv_bytes: &[u8]) -> Result<Arc<ShaderModule
 fn main() -> Result<()> {
     // --- SDL2 init ---
     let sdl = sdl2::init().map_err(|e| anyhow!(e))?;
+    let game_controller = sdl.game_controller().map_err(|e| anyhow!(e))?;
+    let joystick = sdl.joystick().map_err(|e| anyhow!(e))?;
     let video = sdl.video().map_err(|e| anyhow!(e))?;
     let window = video
         .window("VulkanCube (SDL2 + Vulkano)", WIDTH, HEIGHT)
@@ -541,6 +574,9 @@ fn main() -> Result<()> {
 
     // --- Event loop state ---
     let mut event_pump = sdl.event_pump().map_err(|e| anyhow!(e))?;
+    let mut controllers: Vec<sdl2::controller::GameController> = Vec::new();
+    let mut joysticks: Vec<sdl2::joystick::Joystick> = Vec::new();
+    open_input_devices(&game_controller, &joystick, &mut controllers, &mut joysticks);
     let mut spin_angle = 1.0_f32;
     let eye = Vec3::new(0.0, 3.0, 5.0);
     let center = Vec3::ZERO;
@@ -599,6 +635,11 @@ fn main() -> Result<()> {
                 }
                 Event::JoyDeviceAdded { which, .. } => {
                     println!("SDL joy device added: which={}", which);
+                    open_input_devices(&game_controller, &joystick, &mut controllers, &mut joysticks);
+                }
+                Event::ControllerDeviceAdded { which, .. } => {
+                    println!("SDL controller device added: which={}", which);
+                    open_input_devices(&game_controller, &joystick, &mut controllers, &mut joysticks);
                 }
                 _ => {}
             }
