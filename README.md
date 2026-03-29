@@ -40,4 +40,7 @@ Prepared SD card layout is in:
 - `tg5040/Emus/tg5040/VUL.pak`
 - `tg5040/Roms/Vulkan Demos (VUL)`
 
-This layout assumes built binaries are placed in `/mnt/SDCARD/Roms/Vulkan Demos (VUL)/.demos-go` on the device.
+This layout assumes built binaries are placed in:
+
+- `/mnt/SDCARD/Roms/Vulkan Demos (VUL)/.demos-go` (Go demos)
+- `/mnt/SDCARD/Roms/Vulkan Demos (VUL)/.demos-rust` (Rust demos)
